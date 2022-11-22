@@ -1,42 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerScript : MonoBehaviour
 {
     private float gravity = 10f;
-
+    [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float turnSpeed = 90f;
+    [SerializeField] private float lerpSpeed = 10f;
+    private Vector3 surfaceNormal;
     private Vector3 thisNormal;
-    private Rigidbody thisRigidbody;
-    private BoxCollider thisCollider;
 
-    private float distanceToGround;
-    private bool isGrounded;
-    private Vector3 thisForward;
-    void Start()
+    public BoxCollider boxCollider; 
+    private Rigidbody thisRigidbody;
+
+    private void Start()
     {
         thisRigidbody = gameObject.GetComponent<Rigidbody>();
-        thisCollider = gameObject.GetComponent<BoxCollider>();
         thisNormal = transform.up;
-        thisForward = Vector3.Cross(transform.right, thisNormal);
-
-        distanceToGround = thisCollider.bounds.extents.y - thisCollider.bounds.center.y;
+        thisRigidbody.freezeRotation = true;
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        Ray ray = new Ray(transform.position, transform.forward);
+        thisRigidbody.AddForce(-gravity * thisRigidbody.mass * thisNormal);
+    }
+
+    private void Update()
+    {
+        Ray ray = new Ray(transform.position, -thisNormal);
         RaycastHit hit;
-        int playerLayer = LayerMask.GetMask("Player");
-        if (Physics.Raycast(ray, out hit, distanceToGround * 2))
+        if (Physics.Raycast(ray, out hit))
         {
-            ChangeWall();
+            surfaceNormal = hit.normal;
         }
-        if (isGrounded) thisRigidbody.AddForce(gravity * thisRigidbody.mass * -thisNormal);
-    }
+        transform.Rotate(0, Input.GetAxis("Horizontal") * turnSpeed * Time.deltaTime, 0);
 
-    private void ChangeWall()
-    {
-        thisForward = Vector3.Cross(transform.right, thisNormal);
+        thisNormal = Vector3.Lerp(thisNormal, surfaceNormal, lerpSpeed * Time.deltaTime);
+        Vector3 myForward = Vector3.Cross(transform.right, thisNormal);
+        Quaternion targetRot = Quaternion.LookRotation(myForward, thisNormal);
+        transform.rotation = Quaternion.Lerp(transform.rotation, targetRot, lerpSpeed * Time.deltaTime);
+        transform.Translate(0, 0, Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime);
     }
 }
