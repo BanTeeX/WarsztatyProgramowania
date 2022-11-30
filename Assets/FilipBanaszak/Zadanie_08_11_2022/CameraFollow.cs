@@ -10,6 +10,7 @@ namespace FilipBanaszak.Zadanie_08_11_2022
 		private void Update()
 		{
 			transform.position = _target.position + _offset;
+			//transform.rotation = Quaternion.FromToRotation(Vector3.down, PlayerGravity.LastDirection);
 		}
 	}
 }
